@@ -171,37 +171,130 @@ async function withDB(func) {
  */
 
 //  GET profile
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve the profile info for the specified uid
+ *      if uid exists
+ * 
+ *      else will return an error
+ */
 app.get('api/users/:name', async (req, res) => {
 
 });
 
 //  GET group list
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve all the groups the uid belongs to
+ *      if uid exists
+ * 
+ *      else will return an error
+ */
 app.get('api/groups?username', async (req, res) => {
 
 });
 
 //  GET post list
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupID: the ID of the parent group
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve the post list of the parent group
+ *      if uid belongs to the parent group
+ * 
+ *      else if does not belong in parent group
+ *      or any ID does not exist
+ *      will return an error
+ */
 app.get('api/:group/posts', async (req, res) => {
       
 });
 
 //  GET search post-list
-app.get('api/:group/posts?query', async (req, res) => {
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupID: the ID of the parent group
+ *      string query: the query to seek in the parent group's posts 
+ *
+ * POST-CONDITIONS:
+ *      will query database and return a list of posts
+ *      if uid belongs to the parent group
+ * 
+ *      else if does not belong in parent group
+ *      or any ID does not exist
+ *      will return an error
+ */
+app.get('api/:group/posts/search', async (req, res) => {
       
 });
 
 //  GET member list
-app.get('api/:group/members?uid', async (req, res) => {
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupID: the ID of the parent group
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve the member list of the parent group
+ *      if uid is an instructor of the parent group
+ * 
+ *      else if not an instructor of the parent group
+ *      or any ID does not exist
+ *      will return an error
+ */
+app.get('api/:group/members', async (req, res) => {
       
 });
 
 //  GET join-requests
-app.get('api/group/join-requests?uid', async (req, res) => {
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupID: the ID of the parent group
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve the post contents
+ *      if uid is an instructor of the parent group
+ * 
+ *      else if not an instructor of the parent group
+ *      or any ID does not exist
+ *      will return an error
+ */
+app.get('api/:group/join-requests', async (req, res) => {
       
 });
 
 //  GET post contents
-app.get('api/:group/post?id', async (req, res) => {
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string postID: the ID of the desired post
+ *      string groupID: the ID of the parent group of the post
+ * 
+ * POST-CONDITIONS:
+ *      will retrieve the post contents
+ *      if uid belongs to the parent group
+ * 
+ *      else if any ID does not exist
+ *      will return an error
+ */
+app.get('api/:group/posts', async (req, res) => {
       
 });
 
@@ -212,6 +305,7 @@ app.get('api/:group/post?id', async (req, res) => {
  * - delete-user
  * - new-group
  * - remove-group
+ * - send join request
  * - remove-user-from-group
  * - swap-group-admin
  * - create-post
@@ -222,31 +316,119 @@ app.get('api/:group/post?id', async (req, res) => {
  * - delete-post-reply
  */
 
-app.post('api/', async (req, res) => {
+// template POST
+//  app.post('api/', async (req, res) => {
 
-});
+// });
 
 // POST update profile
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupToDeleteID: the ID of the group to be removed
+ * 
+ * POST-CONDITIONS:
+ *      will update the user's profile
+ *      if uid belongs to the group admin
+ * 
+ *      else if not authorized, will return an error message
+ *      else if any of the given IDs does not exist, will return an error message
+ *          
+ */
 app.post('api/user/update', async (req, res) => {
 
 });
 
 //  POST delete-user
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ * 
+ * POST-CONDITIONS:
+ *      will delete the current user
+ *      if uid belongs to the group admin
+ * 
+ *      else if the given ID does not exist, will return an error message
+ *          
+ */
 app.post('api/user/delete', async (req, res) => {
 
 });
 
 //  POST new group
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string name: name of the group
+ * 
+ * POST-CONDITIONS:
+ *      will create a new group 
+ *      if uid belongs to the group admin
+ * 
+ *      else if not authorized, will return an error message
+ *      else if any of the given IDs does not exist, will return an error message
+ *          
+ */
 app.post('api/groups/new', async (req, res) => {
 
 });
 
-//  POST remove-group
+// POST send join request
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupToJoin: the ID of the group to request to join
+ * 
+ * POST-CONDITIONS:
+ *      will request to join group
+ *      if uid exists
+ * 
+ *      else if any of the given IDs does not exist, will return an error
+ *          
+ */
+ app.post('api/:group/request-to-join', async (req, res) => {
+
+});
+
+//  POST delete-group
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupToDeleteID: the ID of the group to be removed
+ * 
+ * POST-CONDITIONS:
+ *      will delete the 
+ *      if uid belongs to the group admin
+ * 
+ *      else if not authorized, will return an error message
+ *      else if any of the given IDs does not exist, will return an error message
+ *          
+ */
 app.post('api/groups/remove', async (req, res) => {
 
 });
 
 //  POST remove-user-from-group
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ *      string groupID: the group ID
+ *      string userToRemoveID: the ID of the user to be removed
+ * 
+ * POST-CONDITIONS:
+ *      will remove the user from group 
+ *      if uid belongs to the group admin or if usertoRemoveID equals uid
+ * 
+ *      else if not authorized, will return an error message
+ *      else if any of the given IDs does not exist, will return an error message
+ *          
+ */
 app.post('api/:group-name/remove-user', async (req, res) => {
 
 });
@@ -257,11 +439,12 @@ app.post('api/:group-name/remove-user', async (req, res) => {
  *      body must contain:
  *      string uid: the current user id
  *      string groupID: the group ID
- *      string postID: the post ID
+ *      string newAdminID: the ID of the new admin. Must be an instructor
  * 
  * POST-CONDITIONS:
- *      will unmark the post as answered 
- *      if uid belongs to one of the group instructors
+ *      will swap the group adming to the given new admin id
+ *      if uid belongs to one of the group instructors and newAdminID belongs to an instructor
+ * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
@@ -269,7 +452,6 @@ app.post('api/:group-name/remove-user', async (req, res) => {
 app.post('api/:group-name/swap-admin', async (req, res) => {
 
 });
-
 //  POST create-post
 /**
  * PRECONDITIONS:
@@ -316,6 +498,7 @@ app.post('api/:group-name/:post-name/reply', async (req, res) => {
  * POST-CONDITIONS:
  *      will mark the post as answered 
  *      if uid belongs to one of the group instructors
+ * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
@@ -328,13 +511,14 @@ app.post('api/:group-name/:post-name/mark-answered', async (req, res) => {
 /**
  * PRECONDITIONS:
  *      body must contain:
- *      string uid: the current user id
+ *      string uid: the current user ID
  *      string groupID: the group ID
  *      string postID: the post ID
  * 
  * POST-CONDITIONS:
- *      will unmark the post as answered 
- *      if uid belongs to one of the group instructors
+ *      will mark the post as not answered 
+ *      if uid belongs to the post author
+ * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
@@ -354,6 +538,7 @@ app.post('api/:group-name/:post-name/unmark-answered', async (req, res) => {
  * POST-CONDITIONS:
  *      will delete the given post
  *      if uid belongs to one of the group instructors, or uid is the post's author's id
+ * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
@@ -374,6 +559,7 @@ app.post('api/:group-name/:post-name/delete', async (req, res) => {
  * POST-CONDITIONS:
  *      will delete the given reply
  *      if uid belongs to one of the group instructors, or uid is the reply's author's id
+ * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
