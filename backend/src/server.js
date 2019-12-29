@@ -1,13 +1,60 @@
-import express from 'express';
+import express, { request } from 'express';
 import bodyParser from 'body-parser';
-import { MongoClient } from 'mongodb';
 import path from 'path';
+import { Connection, ConnectionError, Request } from 'tedious';
 
+// EXPRESS
 const app = express();  // initialize express server
-
 app.use(express.static(path.join(__dirname, '/build')));  // static requests directed to react
-
 app.use(bodyParser.json());  // parse package body with json
+
+// MSSQL
+const config = {
+    server: 'localhost',
+    authentication: {
+        type: 'default',
+        options: {
+            userName: 'server',
+            password: 'teus88'
+        }
+    },
+    options: {
+        // encrypt: true,
+        database: 'qa'
+    }
+};
+const connection = new Connection(config);
+
+
+function selectFromDB(selectQuery, columnNames) {
+    let queryPromise = Promise((resolve, reject) => {
+        let resultRows = [];
+        let iterNames = columnNames[Symbol.iterator]();
+        let request = new Request(selectQuery, err => err ? err : null);
+        connection.on('connect', err => { // on connect
+            if (!err) { // if no error
+                let request = new Request(selectQuery); // create request
+                request.on('row', columns => {  // upon row call back
+                    let row = {};
+                    columns.forEach(column => { // iterate per each column
+                        if (column.value !== null) {  // if value is not null 
+                            let nextName = iterNames.next(); // get the next column name
+                            if (!nextName.done) {  // if iterator is not consumed
+                                row[nextName] = column.value; // pair column name with column value
+                            }
+                        }
+                    });
+                    resultRows.push(row); // after processing all columns, push to row list
+                });
+            }
+            console.log(resultRows, 'within select from DB');
+            connection.on('done', () => { resolve(resultRows); }); // when query is done, return result rows
+            connection.execSql(request);
+        }, 300); // promise timeout of 300ms
+    });
+    return queryPromise;
+}
+
 
 /**
  * Manage the connection to database.
@@ -19,143 +66,8 @@ app.use(bodyParser.json());  // parse package body with json
  * :post-condition: will open and close connection to database * 
  * 
  */
-async function withDB(func) {
-    try {
-
-    } catch{
-        res.status(500).json({ message: 'error connecting to db', error });
-    }
-}
 
 
-/**
- *  landing page
- * 
- * users not logged in will be redirected here
- */
-
-
-/**
- * Login page
- *
- * User logs-in here
- * 
- * if new user or not initialized profile, redirect to profile page. Else redirect to group-list page.
- * 
- * */
-
-
-/**
- * group-list page
- * 
- * 
- * users can manage their groups here:
- * 
- * students can:
- * -search for new groups 
- * -request to join groups
- * -access current groups
- * -exit current groups
- * 
- * instructors can:
- * -create new groups
- * -access group content
- * -manage individual groups
- * 
- *  */
-
-
-
-/**
- * group page
- * 
- * The group content is displayed here
- * 
- * students can:
- * -post new threads
- * -access existing threads
- * -search in existing threads
- * -exit group
- * -navigate to group-list page
- * 
- * instructors can:
- * -access existing threads
- * -search in existing threads
- * -remove threads
- * -navigate to group-list page
- * -navigate to manage-group page
- * 
- */
-
-/**
- * new-post page
- * 
- * ONLY accessible to students
- * 
- * students must:
- * -provide a post name
- * -provide post content
- * 
- */
-
-
-/**
- * question page
- * 
- * the thread details are found here
- * 
- * all users can:
- * - reply to post
- * 
- * instructors can:
- * - mark as answered
- * - delete post
- * - delete post-reply
- * 
- * author can:
- * - un-mark as answered
- * - delete post
- * 
- * reply author can:
- * - delete post-reply
- * 
- */
-
-
-/**
- * profile-page
- * 
- * all users must:
- * -provide a name
- * -choose between instructor, or student(cannot be changed after initialization)
- * 
- * all users can:
- * -change password
- * -delete account(
- *      there must be a different group admin in every group before an instructor can delete his account.
- *      This is only accessible to a user that has previously been initialized
- * )
- * 
- */
-
-
-/**
- * manage-group page
- * 
- * ONLY accessible to instructors
- * 
- * instructors can:
- * -delete group
- * -accept join requests (must be admin to accept request from instructor)
- * -reject join requests
- * -remove users
- * 
- * 
- * group admin:
- * - add instructor
- * - remove instructor
- * - swap admin status
- */
 
 // REQUEST MANAGMENT
 /**
@@ -182,8 +94,21 @@ async function withDB(func) {
  * 
  *      else will return an error
  */
-app.get('api/users/:name', async (req, res) => {
-
+async function pepe() {
+    let queryResult = await selectFromDB("SELECT ID, name, isInstructor, lastTimeActive, groups, posts, replys FROM dbo.users WHERE ID = 'X7X7'",
+        ['ID', 'name', 'isInstructor', 'lastTimeActive', 'groups', 'posts', 'replys']);
+    console.log(queryResult);
+}
+pepe();
+app.post('/api/users/:name/get-profile', async (req, res) => {
+    let queryResult;
+    try {
+        queryResult = await selectFromDB("SELECT (ID, name, isInstructor, lastTimeActive, groups, posts, replys) FROM dbo.users WHERE ID = 'X7X7'",
+            [ID, name, isInstructor, lastTimeActive, groups, posts, replys]);
+    } catch (err) {
+        queryResult = err;
+    }
+    res.status(200).json(queryResult);
 });
 
 //  GET group list
@@ -198,7 +123,7 @@ app.get('api/users/:name', async (req, res) => {
  * 
  *      else will return an error
  */
-app.get('api/groups?username', async (req, res) => {
+app.post('api/groups/get-list', async (req, res) => {
 
 });
 
@@ -217,8 +142,8 @@ app.get('api/groups?username', async (req, res) => {
  *      or any ID does not exist
  *      will return an error
  */
-app.get('api/:group/posts', async (req, res) => {
-      
+app.post('api/:group/posts/get-list', async (req, res) => {
+
 });
 
 //  GET search post-list
@@ -237,8 +162,8 @@ app.get('api/:group/posts', async (req, res) => {
  *      or any ID does not exist
  *      will return an error
  */
-app.get('api/:group/posts/search', async (req, res) => {
-      
+app.post('api/:group/posts/search', async (req, res) => {
+
 });
 
 //  GET member list
@@ -257,7 +182,7 @@ app.get('api/:group/posts/search', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/members', async (req, res) => {
-      
+
 });
 
 //  GET join-requests
@@ -276,7 +201,7 @@ app.get('api/:group/members', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/join-requests', async (req, res) => {
-      
+
 });
 
 //  GET post contents
@@ -295,7 +220,7 @@ app.get('api/:group/join-requests', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/posts', async (req, res) => {
-      
+
 });
 
 /**
@@ -390,7 +315,7 @@ app.post('api/groups/new', async (req, res) => {
  *      else if any of the given IDs does not exist, will return an error
  *          
  */
- app.post('api/:group/request-to-join', async (req, res) => {
+app.post('api/:group/request-to-join', async (req, res) => {
 
 });
 
@@ -567,3 +492,5 @@ app.post('api/:group-name/:post-name/delete', async (req, res) => {
 app.post('api/:group-name/:post-name/delete-reply', async (req, res) => {
 
 });
+
+app.listen(8000, () => { console.log('Listening on port 8000'); });
