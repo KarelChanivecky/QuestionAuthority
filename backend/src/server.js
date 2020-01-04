@@ -1,72 +1,13 @@
 import express, { request } from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
-import { Connection, ConnectionError, Request } from 'tedious';
+import * as mssql from './mssql';
+import * as utilities from './utilities';
 
 // EXPRESS
 const app = express();  // initialize express server
 app.use(express.static(path.join(__dirname, '/build')));  // static requests directed to react
 app.use(bodyParser.json());  // parse package body with json
-
-// MSSQL
-const config = {
-    server: 'localhost',
-    authentication: {
-        type: 'default',
-        options: {
-            userName: 'server',
-            password: 'teus88'
-        }
-    },
-    options: {
-        // encrypt: true,
-        database: 'qa'
-    }
-};
-const connection = new Connection(config);
-
-
-function selectFromDB(selectQuery, columnNames) {
-    let queryPromise = Promise((resolve, reject) => {
-        let resultRows = [];
-        let iterNames = columnNames[Symbol.iterator]();
-        let request = new Request(selectQuery, err => err ? err : null);
-        connection.on('connect', err => { // on connect
-            if (!err) { // if no error
-                let request = new Request(selectQuery); // create request
-                request.on('row', columns => {  // upon row call back
-                    let row = {};
-                    columns.forEach(column => { // iterate per each column
-                        if (column.value !== null) {  // if value is not null 
-                            let nextName = iterNames.next(); // get the next column name
-                            if (!nextName.done) {  // if iterator is not consumed
-                                row[nextName] = column.value; // pair column name with column value
-                            }
-                        }
-                    });
-                    resultRows.push(row); // after processing all columns, push to row list
-                });
-            }
-            console.log(resultRows, 'within select from DB');
-            connection.on('done', () => { resolve(resultRows); }); // when query is done, return result rows
-            connection.execSql(request);
-        }, 300); // promise timeout of 300ms
-    });
-    return queryPromise;
-}
-
-
-/**
- * Manage the connection to database.
- * 
- * @param {function} func : function to be wrapped.
- * :precondition: func must be a function
- * :precondition: func must accept a database object as argument
- * :post-condition: will manage exceptions occurring within func
- * :post-condition: will open and close connection to database * 
- * 
- */
-
 
 
 // REQUEST MANAGMENT
@@ -82,7 +23,7 @@ function selectFromDB(selectQuery, columnNames) {
  * 
  */
 
-//  GET profile
+//  get profile
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -94,24 +35,18 @@ function selectFromDB(selectQuery, columnNames) {
  * 
  *      else will return an error
  */
-async function pepe() {
-    let queryResult = await selectFromDB("SELECT ID, name, isInstructor, lastTimeActive, groups, posts, replys FROM dbo.users WHERE ID = 'X7X7'",
-        ['ID', 'name', 'isInstructor', 'lastTimeActive', 'groups', 'posts', 'replys']);
-    console.log(queryResult);
-}
-pepe();
+
 app.post('/api/users/:name/get-profile', async (req, res) => {
-    let queryResult;
+    const { uid } = req.body;
     try {
-        queryResult = await selectFromDB("SELECT (ID, name, isInstructor, lastTimeActive, groups, posts, replys) FROM dbo.users WHERE ID = 'X7X7'",
-            [ID, name, isInstructor, lastTimeActive, groups, posts, replys]);
+        let queryResult = await mssql.selectFromDB();
     } catch (err) {
-        queryResult = err;
+        res.status(500).send('Oops, database error!');
     }
     res.status(200).json(queryResult);
 });
 
-//  GET group list
+//  get group list
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -124,10 +59,17 @@ app.post('/api/users/:name/get-profile', async (req, res) => {
  *      else will return an error
  */
 app.post('api/groups/get-list', async (req, res) => {
-
+    const { uid } = req.body;
+    try{
+        let queryResult = await selectFromDB( );
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
-//  GET post list
+//  get thread list
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -135,38 +77,52 @@ app.post('api/groups/get-list', async (req, res) => {
  *      string groupID: the ID of the parent group
  * 
  * POST-CONDITIONS:
- *      will retrieve the post list of the parent group
+ *      will retrieve the thread list of the parent group
  *      if uid belongs to the parent group
  * 
  *      else if does not belong in parent group
  *      or any ID does not exist
  *      will return an error
  */
-app.post('api/:group/posts/get-list', async (req, res) => {
-
+app.post('api/:group/threads/get-list', async (req, res) => {
+    const {uid, groupID } = req.body;
+    try{
+        let queryResult = await selectFromDB();
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
-//  GET search post-list
+//  get search thread-list
 /**
  * PRECONDITIONS:
  *      body must contain:
  *      string uid: the current user id
  *      string groupID: the ID of the parent group
- *      string query: the query to seek in the parent group's posts 
+ *      string query: the query to seek in the parent group's threads 
  *
  * POST-CONDITIONS:
- *      will query database and return a list of posts
+ *      will query database and return a list of threads
  *      if uid belongs to the parent group
  * 
  *      else if does not belong in parent group
  *      or any ID does not exist
  *      will return an error
  */
-app.post('api/:group/posts/search', async (req, res) => {
-
+app.post('api/:group/threads/search', async (req, res) => {
+    const { uid, groupID, searchQuery } = req.body;
+    try{
+        let queryResult = await selectFromDB();
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
-//  GET member list
+//  get member list
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -182,10 +138,17 @@ app.post('api/:group/posts/search', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/members', async (req, res) => {
-
+    const { uid, groupID } = req.body;
+    try{
+        let queryResult = await selectFromDB();
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
-//  GET join-requests
+//  get join-requests
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -201,10 +164,17 @@ app.get('api/:group/members', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/join-requests', async (req, res) => {
-
+    const { uid } = req.body;
+    try{
+        let queryResult = await selectFromDB();
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
-//  GET post contents
+//  get post contents
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -220,7 +190,14 @@ app.get('api/:group/join-requests', async (req, res) => {
  *      will return an error
  */
 app.get('api/:group/posts', async (req, res) => {
-
+    const { uid } = req.body;
+    try{
+        let queryResult = await selectFromDB();
+    } catch (err){
+        res.status(500).send('Oops, database error!');
+    }
+    res.status(200).json(queryResult);
+    return queryResult;
 });
 
 /**
@@ -246,18 +223,29 @@ app.get('api/:group/posts', async (req, res) => {
 
 // });
 
+// POST create profile
+/**
+ * PRECONDITIONS:
+ *      body must contain:
+ *      string uid: the current user id
+ * 
+ * POST-CONDITIONS:
+ *      will create the user's profile
+ */
+app.post('api/:user/create', async (req, res) => {
+
+});
+
 // POST update profile
 /**
  * PRECONDITIONS:
  *      body must contain:
  *      string uid: the current user id
- *      string groupToDeleteID: the ID of the group to be removed
  * 
  * POST-CONDITIONS:
  *      will update the user's profile
  *      if uid belongs to the group admin
  * 
- *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
