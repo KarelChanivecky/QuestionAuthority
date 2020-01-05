@@ -25,16 +25,13 @@ async function withDB(func) {
 
 }
 
-async function selectFromDB(query) {
+export async function queryDB(query) {
     return await withDB(async (sqlRequest) => {
         try{
-            let toPrint = await sqlRequest.query(query);
+            let result = await sqlRequest.query(query);
         }catch (err){
             throw new EvalError(err);
         }
-        console.log('@within func', toPrint.recordsets);
-        return toPrint;
+        return result;
     });
 }
-
-export {selectFromDB};

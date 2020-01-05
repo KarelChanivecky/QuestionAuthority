@@ -1,4 +1,37 @@
 // SQL QUERIES
+/**
+ * getProfile
+ * addNotification
+ * removeNotification
+ * getGroupList
+ * getThreads
+ * searchInThreads
+ * getGroupMembers
+ * getGroupJoinRequests
+ * getThreadPosts
+ * createUser
+ * updateUser
+ * updateUserTime
+ * deleteUser
+ * createGroup
+ * addGroupUser
+ * addJoinRequest
+ * removeGroupUser
+ * addGroupInstructor
+ * removeGroupInstructor
+ * swapGroupAdmin
+ * deleteGroup
+ * createThread
+ * getThread
+ * markThreadAnswered
+ * markThreadUnanswered
+ * setSticky
+ * unSetSticky
+ * deleteThread
+ * addThreadPost
+ * editThreadPost
+ * deleteThreadPost
+ */
 
 export function getProfile(uid){
     return `SELECT userID, name, isInstructor, lastTimeActive 
@@ -65,19 +98,21 @@ export function getThreadPosts(uid, name, postID){
 
     SELECT textContent, datePosted, lastEdited, postID
     FROM dbo.posts ps
-    WHERE postID = ${postID}`;
+    WHERE postID = ${postID}
+    ORDER BY threadID ASC`;
 }
 
-export function createUser(uid, name, isInstructor, time){ 
-    return `INSERT dbo.users (userID, name, isInstructor, lastTimeActive)
-    VALUES (${uid}, ${name}, ${isInstructor}, ${time})`;
+export function createUser(uid, name, isInstructor, time, email = null){ 
+    return `INSERT dbo.users (userID, name, isInstructor, lastTimeActive, email)
+    VALUES (${uid}, ${name}, ${isInstructor}, ${time}, ${email})`;
 }
 
-export function updateUser(uid, name, time){
+export function updateUser(uid, name, time, email = null){
     return `UPDATE dbo.users
     SET userID = ${uid}
     SET name = ${name}
     SET lastTimeActive = ${time}
+    SET email = ${email}
     WHERE userID = uid`;
 }
 
@@ -87,7 +122,7 @@ export function updateUserTime(uid, time){
     WHERE userID = ${uid}`;
 }
 
-export function deleteUser(uid){
+export function deleteUser(uid, userToDeleteID){
     return `DELETE 
     FROM dbo.users
     WHERE userID = ${uid}`;
@@ -149,9 +184,27 @@ export function deleteGroup(uid, groupID){
     DELETE FROM dbo.groups WHERE groupID = ${groupID}`;
 }
 
-export function createThread(uid, groupID, timePosted, title, ){
+export function createThread(uid, groupID, datePosted, title, text){
     return `INSERT dbo.threads (authorID, groupID, title, datePosted, orderPosition)
-    VALUES (${uid}, ${groupID}, ${title}, ${timePosted}, (SELECT NEXT VALUE FOR qa.dbo.threadOrder))`;
+    VALUES (${uid}, ${groupID}, ${title}, ${datePosted}, (SELECT NEXT VALUE FOR qa.dbo.threadOrder))
+    GO
+
+    DECLARE @threadID int;
+    SET @threadID = (SELECT threadID FROM dbo.threads 
+    WHERE authorID = ${userID} AND groupID = ${groupID}) AND title = ${title}
+
+    INSERT dbo.posts (authorID, threadID, text, datePosted)
+    VALUES(${uid}, @threadID, ${text}, ${datePosted})
+    `;
+}
+
+export function getThread(uid, threadID){
+    return `DECLARE @threadGroupID varchar(50);
+    SET @threadGroupID = (SELECT groupID FROM dbo.threads WHERE threadID = ${threadID})
+    
+    IF (SELECT * FROM dbo.enrollment WHERE userID = ${uid} AND groupID = @threadGroupID)
+    SELECT * FROM dbo.posts WHERE threadID = ${threadID}
+    ORDER BY threadID ASC`;
 }
 
 export function markThreadAnswered(uid, threadID){

@@ -2,25 +2,53 @@ import express, { request } from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
 import * as mssql from './mssql';
-import * as utilities from './utilities';
+import * as sqlQueries from './SQLqueries';
+import * as utils from './utilities';
 
 // EXPRESS
 const app = express();  // initialize express server
 app.use(express.static(path.join(__dirname, '/build')));  // static requests directed to react
 app.use(bodyParser.json());  // parse package body with json
 
+// GLOBALS
 
 // REQUEST MANAGMENT
 /**
- * GET:
+ * paths:
  * - profile
+ * - add-notification
+ * - remove notification
  * - group-list
- * - post-list
- * - search-post-list
+ * - thread-list
+ * - search-thread-list
  * - member-list
  * - join-requests
- * - post-content
+ * - thread-content
+ * - update-profile
+ * - delete-user
+ * - new-group
+ * - remove-group
+ * - send join request
+ * - remove-user-from-group
+ * - swap-group-admin
+ * - create-thread
+ * - post-to-thread
+ * - mark-answered
+ * - un-mark-answered
+ * - delete-thread
+ * - delete-post
  * 
+ * - addNotification
+ * - removeNotification
+ * - createUser
+ * - updateUserTime
+ * - addGroupUser
+ * - addGroupInstructor
+ * - removeGroupInstructor
+ * - setSticky
+ * - unSetSticky
+ * - editThreadPost
+
  */
 
 //  get profile
@@ -38,12 +66,14 @@ app.use(bodyParser.json());  // parse package body with json
 
 app.post('/api/users/:name/get-profile', async (req, res) => {
     const { uid } = req.body;
+    let query = sqlQueries.getProfile(uid);
     try {
-        let queryResult = await mssql.selectFromDB();
+        let queryResult = await mssql.queryDB(query);
     } catch (err) {
         res.status(500).send('Oops, database error!');
-    }
-    res.status(200).json(queryResult);
+    }finally{
+        res.status(200).json(queryResult);
+    }    
 });
 
 //  get group list
@@ -60,13 +90,14 @@ app.post('/api/users/:name/get-profile', async (req, res) => {
  */
 app.post('api/groups/get-list', async (req, res) => {
     const { uid } = req.body;
-    try{
-        let queryResult = await selectFromDB( );
-    } catch (err){
+    let query = sqlQueries.getGroupList(uid);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
 
 //  get thread list
@@ -85,14 +116,15 @@ app.post('api/groups/get-list', async (req, res) => {
  *      will return an error
  */
 app.post('api/:group/threads/get-list', async (req, res) => {
-    const {uid, groupID } = req.body;
-    try{
-        let queryResult = await selectFromDB();
-    } catch (err){
+    const { uid, groupID } = req.body;
+    let query = sqlQueries.getThreads(uid, groupID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
 
 //  get search thread-list
@@ -113,13 +145,14 @@ app.post('api/:group/threads/get-list', async (req, res) => {
  */
 app.post('api/:group/threads/search', async (req, res) => {
     const { uid, groupID, searchQuery } = req.body;
-    try{
-        let queryResult = await selectFromDB();
-    } catch (err){
+    let query = sqlQueries.searchInThreads(uid, groupID, searchQuery);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
 
 //  get member list
@@ -137,15 +170,16 @@ app.post('api/:group/threads/search', async (req, res) => {
  *      or any ID does not exist
  *      will return an error
  */
-app.get('api/:group/members', async (req, res) => {
+app.post('api/:group/members', async (req, res) => {
     const { uid, groupID } = req.body;
-    try{
-        let queryResult = await selectFromDB();
-    } catch (err){
+    let query = sqlQueries.getGroupMembers(uid, groupID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
 
 //  get join-requests
@@ -163,15 +197,16 @@ app.get('api/:group/members', async (req, res) => {
  *      or any ID does not exist
  *      will return an error
  */
-app.get('api/:group/join-requests', async (req, res) => {
-    const { uid } = req.body;
-    try{
-        let queryResult = await selectFromDB();
-    } catch (err){
+app.post('api/:group/join-requests', async (req, res) => {
+    const { uid, groupID } = req.body;
+    let query = sqlQueries.getGroupJoinRequests(uid, groupID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
 
 //  get post contents
@@ -189,39 +224,17 @@ app.get('api/:group/join-requests', async (req, res) => {
  *      else if any ID does not exist
  *      will return an error
  */
-app.get('api/:group/posts', async (req, res) => {
-    const { uid } = req.body;
-    try{
-        let queryResult = await selectFromDB();
-    } catch (err){
+app.post('api/:group/threads/:thread', async (req, res) => {
+    const { uid, threadID } = req.body;
+    let query = sqlQueries.getThreads(uid, threadID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
         res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
     }
-    res.status(200).json(queryResult);
-    return queryResult;
 });
-
-/**
- * POST:
- * 
- * - update-profile
- * - delete-user
- * - new-group
- * - remove-group
- * - send join request
- * - remove-user-from-group
- * - swap-group-admin
- * - create-thread
- * - post-to-thread
- * - mark-answered
- * - un-mark-answered
- * - delete-thread
- * - delete-post
- */
-
-// template POST
-//  app.post('api/', async (req, res) => {
-
-// });
 
 // POST create profile
 /**
@@ -232,8 +245,16 @@ app.get('api/:group/posts', async (req, res) => {
  * POST-CONDITIONS:
  *      will create the user's profile
  */
-app.post('api/:user/create', async (req, res) => {
-
+app.post('api/users/create', async (req, res) => {
+    const { uid, name,  } = req.body;
+    let query = sqlQueries.createUser(uid, name, utils.getISOtime());
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 // POST update profile
@@ -249,8 +270,16 @@ app.post('api/:user/create', async (req, res) => {
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/user/update', async (req, res) => {
-
+app.post('api/users/:user/update', async (req, res) => {
+    const { uid, name, email} = req.body;
+    let query = sqlQueries.updateUser(uid, name, utils.getISOtime(), email);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST delete-user
@@ -265,8 +294,16 @@ app.post('api/user/update', async (req, res) => {
  *      else if the given ID does not exist, will return an error message
  *          
  */
-app.post('api/user/delete', async (req, res) => {
-
+app.post('api/users/:user/delete', async (req, res) => {
+    const { uid, userToDelete } = req.body;
+    let query = sqlQueries.deleteUser(uid);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST new group
@@ -285,7 +322,15 @@ app.post('api/user/delete', async (req, res) => {
  *          
  */
 app.post('api/groups/new', async (req, res) => {
-
+    const { uid, name } = req.body;
+    let query = sqlQueries.createGroup(uid, name);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 // POST send join request
@@ -302,8 +347,16 @@ app.post('api/groups/new', async (req, res) => {
  *      else if any of the given IDs does not exist, will return an error
  *          
  */
-app.post('api/:group/request-to-join', async (req, res) => {
-
+app.post('api/groups/:group/request-to-join', async (req, res) => {
+    const { uid, groupID } = req.body;
+    let query = sqlQueries.addJoinRequest(uid, groupID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST delete-group
@@ -314,15 +367,23 @@ app.post('api/:group/request-to-join', async (req, res) => {
  *      string groupToDeleteID: the ID of the group to be removed
  * 
  * POST-CONDITIONS:
- *      will delete the 
+ *      will delete the group
  *      if uid belongs to the group admin
  * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/groups/remove', async (req, res) => {
-
+app.post('api/groups/:group/remove', async (req, res) => {
+    const { uid, groupID } = req.body;
+    let query = sqlQueries.deleteGroup(uid, groupID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST remove-user-from-group
@@ -341,8 +402,16 @@ app.post('api/groups/remove', async (req, res) => {
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/:group-name/remove-user', async (req, res) => {
-
+app.post('api/groups/:group/remove-user', async (req, res) => {
+    const { uid, groupID, userToRemove } = req.body;
+    let query = sqlQueries.removeGroupUser(uid, groupID, userToRemove);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST swap-group-admin
@@ -361,10 +430,18 @@ app.post('api/:group-name/remove-user', async (req, res) => {
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/:group-name/swap-admin', async (req, res) => {
-
+app.post('api/groups/:group-name/swap-admin', async (req, res) => {
+    const { uid, groupID, newAdminID } = req.body;
+    let query = sqlQueries.swapGroupAdmin(uid, groupID, newAdminID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
-//  POST create-post
+//  POST create-thread
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -373,15 +450,23 @@ app.post('api/:group-name/swap-admin', async (req, res) => {
  *      string text: the reply text
  * 
  * POST-CONDITIONS:
- *      will create a new post
+ *      will create a new thread
  *      if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/:group-name/create-new-post', async (req, res) => {
-
+app.post('api/:group-name/create-new-thread', async (req, res) => {
+    const { uid, groupID, text } = req.body;
+    let query = sqlQueries.createThread(uid, groupID, utils.getISOtime(), title, text);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
-//  POST reply-to-post
+//  POST post-to-thread
 /**
  * PRECONDITIONS:
  *      body must contain:
@@ -395,8 +480,16 @@ app.post('api/:group-name/create-new-post', async (req, res) => {
  *      if any of the given IDs does not exist, will return an error message
  *          
  */
-app.post('api/:group-name/:post-name/reply', async (req, res) => {
-
+app.post('api/:group-name/:thread-name/post', async (req, res) => {
+    const { uid, threadID, text } = req.body;
+    let query = sqlQueries.addThreadPost(uid, threadID, text, utils.getISOtime());
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST mark-answered
@@ -405,10 +498,10 @@ app.post('api/:group-name/:post-name/reply', async (req, res) => {
  *      body must contain:
  *      string uid: the current user id
  *      string groupID: the group ID
- *      string postID: the post ID
+ *      string threadID: the thread ID
  * 
  * POST-CONDITIONS:
- *      will mark the post as answered 
+ *      will mark the thread as answered 
  *      if uid belongs to one of the group instructors
  * 
  *      else if not authorized, will return an error message
@@ -416,7 +509,15 @@ app.post('api/:group-name/:post-name/reply', async (req, res) => {
  *          
  */
 app.post('api/:group-name/:post-name/mark-answered', async (req, res) => {
-
+    const { uid, threadID } = req.body;
+    try {
+        let query = sqlQueries.markThreadAnswered(uid, threadID);
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST unmark-answered
@@ -425,38 +526,54 @@ app.post('api/:group-name/:post-name/mark-answered', async (req, res) => {
  *      body must contain:
  *      string uid: the current user ID
  *      string groupID: the group ID
- *      string postID: the post ID
+ *      string threadID: the post ID
  * 
  * POST-CONDITIONS:
- *      will mark the post as not answered 
- *      if uid belongs to the post author
+ *      will mark the thread as not answered 
+ *      if uid belongs to the thread author
  * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
 app.post('api/:group-name/:post-name/unmark-answered', async (req, res) => {
-
+    const { uid, threadID } = req.body;
+    try {
+        let query = sqlQueries.markThreadUnanswered(uid, threadID);
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
-//  POST delete-post
+//  POST delete-thread
 /**
  * PRECONDITIONS:
  *      body must contain:
  *      string uid: the current user id
  *      string groupID: the group ID
- *      string postID: the post ID
+ *      string threadID: the post ID
  * 
  * POST-CONDITIONS:
- *      will delete the given post
- *      if uid belongs to one of the group instructors, or uid is the post's author's id
+ *      will delete the given thread
+ *      if uid belongs to one of the group instructors, or uid is the thread's author's id
  * 
  *      else if not authorized, will return an error message
  *      else if any of the given IDs does not exist, will return an error message
  *          
  */
 app.post('api/:group-name/:post-name/delete', async (req, res) => {
-
+    const { uid, threadID } = req.body;
+    let query = sqlQueries.deleteThread(uid, threadID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
 
 //  POST delete-reply
@@ -477,7 +594,188 @@ app.post('api/:group-name/:post-name/delete', async (req, res) => {
  *          
  */
 app.post('api/:group-name/:post-name/delete-reply', async (req, res) => {
-
+        const { uid, postID } = req.body;
+        let query = sqlQueries.deleteThreadPost(uid, postID);
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
 });
+
+/**
+ *  addNotification
+ * removeNotification
+ * createUser
+ * updateUserTime
+ * addGroupUser
+ * addGroupInstructor
+ * removeGroupInstructor
+ * setSticky
+ * unSetSticky
+ * editThreadPost
+
+ */
+
+ 
+ /**
+  * 
+  * 
+  * PRECONDITIONS:
+  * 
+  * 
+  * POSTCONDITIONS:
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+/**
+  * 
+  */
+ app.post('api/', async (req, res) => {
+    const {  } = req.body;
+    let query = sqlQueries.;
+    try {
+        let queryResult = await mssql.queryDB(query);
+    } catch (err) {
+        res.status(500).send('Oops, database error!');
+    }finally{
+        res.status(200).json(queryResult);
+    }
+});
+
+
 
 app.listen(8000, () => { console.log('Listening on port 8000'); });
