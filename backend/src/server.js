@@ -210,12 +210,12 @@ app.get('api/:group/posts', async (req, res) => {
  * - send join request
  * - remove-user-from-group
  * - swap-group-admin
- * - create-post
- * - reply-to-post
+ * - create-thread
+ * - post-to-thread
  * - mark-answered
  * - un-mark-answered
+ * - delete-thread
  * - delete-post
- * - delete-post-reply
  */
 
 // template POST
@@ -261,7 +261,6 @@ app.post('api/user/update', async (req, res) => {
  * 
  * POST-CONDITIONS:
  *      will delete the current user
- *      if uid belongs to the group admin
  * 
  *      else if the given ID does not exist, will return an error message
  *          
