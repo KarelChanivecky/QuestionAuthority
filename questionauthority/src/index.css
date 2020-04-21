@@ -1,0 +1,106 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+header img {
+  height: 2.5em;
+}
+
+header {
+  background-color: yellow;
+  margin-bottom: 1em;
+}
+
+.login-page-btn {
+  width: 9em;  
+}
+
+.primary-btn-color{
+  background: #f5c242;
+}
+
+#signupBtn {
+  margin-top: 1em;
+}
+
+.page-btn-2{
+  height: 3em;
+  width: 4em; 
+}
+
+.page-btn-img{
+  height: 2em;
+  width: 2em; 
+}
+
+.list-row-icon{
+  height: 1.7rem;
+  margin-top: 0px;
+}
+
+h1{
+  font-size: x-large;
+}
+
+#list-header{
+  margin-top: 10px;
+}
+
+.list-group-item{
+  padding: 0rem;
+}
+
+.list-icon-col{
+  background-color:#f5c242;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.list-icon-col:hover{
+  background-color: #FFFF54;
+}
+
+.list-icon-col:active{
+  background-color: #808026;
+}
+
+.list-row{
+  background-color: rgb(229, 251, 253);
+  line-height: 3.5rem;
+  margin: 0 auto;
+  border-top: 1px solid white;
+  border-radius: 5px;
+}
+
+.jumbotron{
+  padding: 1rem 0.5rem;
+  background-color: white;
+}
+
+.search-bar{
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
+
+.search-bar input{
+  height: 2rem;
+}
+
+.search-bar button{
+  height: 2rem;
+  line-height: 1rem;
+}
+
+.search-bar button img {
+  height: 1.3rem;
+}

@@ -1,0 +1,29 @@
+{
+  "name": "question_authority",
+  "version": "1.0.0",
+  "description": "A communication platform for alumni and instructors",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KarelChanivecky/QuestionAuthority.git"
+  },
+  "author": "Karel Chanivecky Garcia",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/KarelChanivecky/QuestionAuthority/issues"
+  },
+  "homepage": "https://github.com/KarelChanivecky/QuestionAuthority#readme",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.15.0",
+    "@typescript-eslint/parser": "^2.15.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-react": "^7.17.0"
+  },
+  "dependencies": {
+    "boostrap": "^2.0.0",
+    "react-bootstrap": "^1.0.0-beta.17"
+  }
+}
